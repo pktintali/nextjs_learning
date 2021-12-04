@@ -92,3 +92,42 @@ Fot fetching api use `getStaticProps` within the page.  and user result as a pro
 - HTML, Javascript and a JSON file are generated
 - **If you navigate directly to the page route, the HTML file is served**
 - **If you navigate to the route from a different route, the page is created client side using the JavaScript and JSON pre fetched from the server.**
+
+## getStaticPaths 
+We use getStaticPaths whenever we have pre render dynamically generated pages.
+For example we have to build page for `posts/1` to `posts/3` so we will use getStaticPaths to tell that we need 1 to 3 posts pre rendered.
+
+```js
+export async function getStaticPaths() {
+    return {
+        paths: [
+            { params: { postId: '1' } },
+            { params: { postId: '2' } },
+            { params: { postId: '3' } },
+        ],
+        fallback: false
+    }
+}
+```
+Suppose when we have 100 posts then we are not gonna write 100 lines manually.
+We can also create the paths programmatically
+
+```js
+export async function getStaticPaths() {
+    const response = await fetch('https://jsonplaceholder.typicode.com/posts')
+    const data = await response.json()
+
+    const paths = data.map(post => {
+        return {
+            params: {
+                postId: post.id.toString()
+            }
+        }
+    })
+    
+    return {
+        paths,
+        fallback: false
+    }
+}
+```

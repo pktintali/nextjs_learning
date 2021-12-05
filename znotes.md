@@ -131,3 +131,173 @@ export async function getStaticPaths() {
     }
 }
 ```
+
+## fallback Key in getStaticPaths
+It is compulsory. It can hold three value.  
+- false
+- true
+- blocking
+
+## fallback: false
+- The paths returned from the getStaticPaths will be **rendered to HTML** at **build time** by getStaticProps.
+- Any paths not returned by getStaticPath  will result in a 404 page.
+
+**when to use** `fallback:false`   
+- If you have an application with a small number of paths to pre-render.
+- When new pages are not added often.
+- A blog site with a few article is a good example for fallback set to false
+
+## fallback: true
+- The paths returned from getStaticPaths will be rendered to html at build time by getStaticProps.
+- The paths that have not been generated at build time **will not result in a 404 page**. Instead, Next.js will serve a "fallback"version of that page on the first request to such a path.
+- In the background Next.js will statically generate the requested path HTML and JSON. This includes running getStaticProps.  
+**Example -** We have defined paths only for post id 1,2 and 3. When we will visit posts/4 it will generate that page at that time and next time it will be used.
+
+- When that's done, the browser receives the JSON for the generated path. this will be used to automatically render the page with the required props. From the user's perspective, the page will be swapped from the fallback page to the full page.
+- At the same time Next.js keeps track of the new list of pre-rendered pages. Subsequent requests to the same path will serve the generated page, just like other pages pre-rendered at build time.
+
+**Note:** Fallback `true` means Next.js is generating the pages and json in the background, and props is not available. And `false` means pages and props are available.
+
+**Note:** But what if we hit posts/n and n does not exist in the api. then we can check in the getStaticProps and return an object with 404.
+```js
+if(idDoesNotExist){
+ return {
+     notFound:true,
+ }
+}
+```
+This will generate 404 page in the browser.
+
+**Note:** When we are using `fallback: true` and if are using link and list of posts then all the pages will be generated as you scroll down. Because Next.Js uses pre-rendering for `Link`.
+
+**When to use** `fallback:true`
+- If your app has a very large number of static pages that depends on the data.
+- You want all the product to be pre-rendered but if you have a few thousand products, builds can take a really long time.
+- You may **statically generate** a small subset of products that are **popular** and use **fallback:true** for the rest.
+- When someone requests a page that's not generated yet, the user will see the page with a loading indicator.
+- Shortly after, `getStaticProps` finishes and the page will be will be rendered with the requested data. From then onwards, everyone who requests the same page will get the statically pre-rendered page.
+- This ensures that users always have a fast experience while preserving fast builds and the benefits of static generation.
+
+## fallback: blocking
+`fallback: blocking` is very similar to `fallback: true`. Only difference is that instead of showing a fallback page you will not see any new content in the UI while the page is being generated on server.
+
+- The paths returned from getStaticPaths will be rendered to HTML at build time by getStaticProps.
+- The paths that have not been generated at build time will not result in a 404 page. Instead. on the first request, Next.js will render the page on the server and return the generated HTML.
+- When that's done, the browser receives the HTML for the generated path. From user's perspective, it will transition from "the browser is requesting the page to" " the full page is loaded". There is no flash of loading/fallback state.
+- At the same time Next.js keep track of the new pre-rendered pages. Subsequent requests to the same path will serve the generated page, just like other pages pre-rendered at build time.
+
+**When to use** `fallback:blocking`
+- On a UX level, sometimes, people prefer the page to be loaded without a loading indictor if the wait time is a few millie seconds. This helps avoid the layout shifts.
+- Some crawlers did not support javascript. The loading page would be rendered an then the full page would be loaded which was causing a problem.
+
+## Static generation and Issues
+- Static generation is a method of pre-rendering where the HTML pages are generated at build time.
+- The pre-rendered static pages can be pushed to cdn, cached and served to clients across the globe almost instantly.
+- Static content is fast and better for SEO as they are immediately indexed by search engines.
+- Static generation with getStaticProps for data fetching and getStaticPaths for dynamic pages seems like a really good approach to a wide variety of applications in production.
+
+**Issues with static site generation**
+- The build time is proportional to the number of pages in the application.
+- A page, once generated, can contain stale data till the time you rebuild the application.
+
+**Issue with build time**  
+When you have to build a very large site with 100,000 page. build time can take 2-3 hour of time.
+
+**Issue with stale(fix/basi) data**  
+Let say you decided to change to price of product then you have to rebuild the entire application.
+
+## Incremental Static Regeneration (ISR)
+There was a need to update only those pages which needed a change without having to rebuild the entire app.
+
+With ISR Next.js allows you to update static pages after you have built your application.
+Which means you can statically generate individual pages without needing to rebuild the entire site, effectively solving the issue of dealing with stale data.
+
+**How to implement ?**  
+In the getStaticProps function, apart from the props key, we can specify a `revalidate` key.
+the value for revalidate is the number of seconds after which a page re-generation can occur.
+
+```js
+export async function getStaticProps() {
+    const response = await fetch('https://jsonplaceholder.typicode.com/posts')
+    const data = await response.json()
+    return {
+        props: {
+            posts: data,
+        },
+        revalidate: 10,
+    }
+}
+```
+
+`revalidate` will re-generate pages after every given seconds. Whenever anyone visit that page.
+
+**Note:** when ever you will visit incremental pages after given time, the page will be re-generated but you will not see that changes at that time , because at that time only pages are build but you got the stale/old page. So next time you will see the changes.
+
+**Note:** Also remember only requested pages will be regenerated. Suppose if we requested products list page then it will be re generated but the detail page will not be generated with updated data unless it has a link with products page.
+
+- revalidation does not mean the page automatically re-generates every n seconds.
+- The re-generation can also fail and the previously cached HTML could be served till the subsequent re-generation succeed.
+
+## Problem with static generation
+- with not able  to fetch data per request, we run into the problem of stale data.
+- let's say news website
+- We don't get access to the incoming request.
+- let's say social media app
+- we can't fetch user specific data
+
+>Static generation end.
+
+# Serer Side Rendering
+- If it is possible and is not very necessary do not  use serer side rendering it's slower than static page generation as pages are generated and served at request time.
+- Next.js allows us to pre-render a page not at build time but at request time.
+- The HTML is generated for every incoming request.
+- SSR is a form of pre-rendering where html is generated at request time.
+- SSR is required when you need to fetch data per request and also when you need to personalized data keeping in mind SEO.
+
+**How to Use** -  Just use `getServerSideProps` function like below nothing special.
+```js
+export async function getServerSideProps() {
+    const response = await fetch('http://localhost:4000/news');
+    const data = await response.json();
+    return {
+        props: {
+            articles: data
+        }
+    }
+}
+```
+
+- get serverSideProps runs only on the server side. The function will never run client side.
+- The code you write inside getStaticProps won't even be included in the JS bundle that is sent to the browser.
+- You can write server-side code directly in `getServerSideProps`
+- Accessing the file system using the fs module and querying the database can be done inside `getServerSideProps`
+- You don't have to worry about including API keys in `getServerSideProps` as that won't make it to the browser.
+- `getSererSideProps` is allowed only in a page and can't be run in a regular component file.
+- It is only used for pre-rendering not client data fetching.
+- `getSererSideProps` should return an object and object should contain a props key which is an object.
+- `getServerSideProps` will run at request time.
+
+**Note:** We can use `context` as a parameter in `getServerSideProps` to get conditional data.
+
+```js
+export async function getServerSideProps(context) {
+    const { params } = context;
+    const { category } = params;
+    const response = await fetch(`http://localhost:4000/news?category=${category}`);
+    const data = await response.json();
+    return {
+        props: {
+            articles: data,
+            category,
+        }
+    }
+}
+```
+`context`  can be also used for many other purposes
+
+```js
+const { params,req,res,query } = context
+console.log(query)
+res.setHeader('Set-Cookie', ['name=Pradeep'])
+const { category } = params
+```

@@ -1,4 +1,6 @@
 # NextJs Notes for Quick revision
+Next.js is full stack framework.  
+You can write the Front End Code ans also write API that can be called by the front end code.
 
 ## File Based Routing
 In NextJs we can create file and the name of file is used as route. For file `home.js` route will be
@@ -301,3 +303,132 @@ console.log(query)
 res.setHeader('Set-Cookie', ['name=Pradeep'])
 const { category } = params
 ```
+
+## Client-Side Data Fetching
+When you want to load user dashboard like scenario.
+then most probably you will use client-side data fetching.
+because we don't need SEO for those pages.
+
+For client-side data fetching we can use `useEffect` technique just like react.
+
+**Note:** Next.Js team recommend SWR for data fetching.
+
+SWR has many features like data stream fetching means you do not need to reload if some api data changes and many more.
+
+```js
+import useSWR from "swr"
+
+const fetcher = async () => {
+    const res = await fetch('http://localhost:4000/dashboard')
+    const data = await res.json()
+    return data
+}
+
+function DashboardSWR() {
+    const { data, error } = useSWR('dashboard', fetcher)
+    if (error) return 'failed to load'
+    if (!data) return 'loading...'
+    return (
+        <div>
+            <h1>Dashboard</h1>
+        </div>
+    )
+}
+```
+
+## Pre-rendering + Client Side Data Fetching
+Consider the following scenario
+
+- We want a event listing page that shows a lists of events happening around us
+- SEO + Request time data fetching -> (Server side rendering with getServerSideProps)
+- Client side data fetching to filter the event
+
+We can use shallow Routing for changing the route based on the filter
+We can combine getServerSideProps and getStaticProps with with client side data fetching and get.
+
+**Shallow Routing: ** - Routing without calling getStaticProps/getServerSideProps
+
+# API Routes Section Intro
+- We can create basic API in Next.js
+- Handle GET requests
+- Handle POST requests
+- Dynamic API route
+- Handle DELETE requests
+- Catch all API routes
+
+## API Routes
+API routes allow us to create RESTful endpoints as part of our Next.js application folder structure.
+- Within the pages folder, we need to create a folder called `api`
+- Within that `api` folder, you can define all the APIs for your applications.
+- You can add business logic without needing to write any additional custom server code and without having to configure any API routes.
+- Next.js gives us everything we need to write full-stack React + Node application.
+
+We can create API by creating a new folder inside pages with name `api`.
+inside api folder every files will be considered as endpoint.
+
+Only we need to export default `handler` function.
+
+```js
+export default function handler(req, res) {
+    res.status(200).json({ name: 'home API route' })
+}
+```
+We can do the nesting and index.js file same like non api pages.
+
+Catch all route can be used with API as well.
+catch all route are not meant to handle route without params.
+For that we can use double square brackets `[[..params]]`.
+
+**Note**: Don't call `internal` APIs inside `getStaticProps` as you can directly access them.
+
+## API Routes Section Summary
+- API routing mechanism is similar to page based routing mechanism.
+- APIs are associated with a route based on their file name
+- Every API route exports a default function typically named as handler function.
+- The handler function receives the request and response as parameters
+- Cater to different requests type like GET and POST using req.method
+- We should not call our own API route for pre-rendering content
+
+# Styling Intro
+Lets get started with styling our Next.js apps
+## Global Styles
+Create next app command already gives global styling files.
+- Inside the styes folder create a new file called `global.css`. Its already created if you haven't deleted. And import it in pages `_app.js`
+- Define anything on global.css it will work globally.
+
+**Adding External CSS Library** - Just add external package and import it inside `_app.js`
+If you want to mix your own style then you can use it in global.css.
+
+## Component level styling
+For components level styling Next.js supports css modules using a `filename.module.css` convention.
+
+For using inside a component import it and use as a className with styles.className
+
+```js
+<div>
+    <p className = {styles.paragraph}>Paragraph</p>
+</div>
+```
+
+## Benefits of using css modules - 
+- css modules locally scope css by automatically creating a unique class name which allows us to use the same css class name in different file without having to worry about name collision.
+- css modules also don't collide with global style
+
+## SASS Support
+SASS is an extension to css that provides powerful features like variables functions and other operation that allow us to build other complex operation in our projects.
+
+- Install tha sass and create fileName.module.scss files and thats it.
+- you can enjoy benefits of scss by creating color variables and using multiple places.
+
+**Inline Styling :** You can just use like react.
+
+```js
+<h2 style={{color:'red'}}>Hello Inline CSS</h2>
+```
+
+## Styling Summary
+- **Global** - In our application, we need to import the CSS file within `pages/_app.js`
+- **Component level** - Next.js supports CSS modules using a [name].module.css naming convention
+- **SASS Support** - install the sass package
+
+# 

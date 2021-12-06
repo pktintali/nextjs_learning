@@ -24,5 +24,45 @@
             "description": "This is the fourth news article",
             "category": "Sports"
         }
+    ],
+    "dashboard":{
+        "posts":80,
+        "likes":100,
+        "followers":20,
+        "following":30
+    },
+    "events":[
+        {
+            "id":1,
+            "title":"Event 1",
+            "description":"This is the first event",
+            "date":"2020-01-01",
+            "time":"10:00",
+            "location":"Sydney"
+        },
+        {
+            "id":2,
+            "title":"Event 2",
+            "description":"This is the second event",
+            "date":"2020-01-01",
+            "time":"10:00",
+            "location":"India"
+        },
+        {
+            "id":3,
+            "title":"Event 3",
+            "description":"This is the third event",
+            "date":"2020-01-01",
+            "time":"10:00",
+            "location":"Sydney"
+        },
+        {
+            "id":4,
+            "title":"Event 4",
+            "description":"This is the fourth event",
+            "date":"2020-01-01",
+            "time":"10:00",
+            "location":"India"
+        }
     ]
 }

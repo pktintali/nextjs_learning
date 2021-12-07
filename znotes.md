@@ -431,4 +431,261 @@ SASS is an extension to css that provides powerful features like variables funct
 - **Component level** - Next.js supports CSS modules using a [name].module.css naming convention
 - **SASS Support** - install the sass package
 
-# 
+# App Layout
+If you want any component like header and footer on every pages then you can wrap you main Component inside _app.js file with Your own component.
+
+```js
+function MyApp({ Component, pageProps }) {
+  return (
+    <>
+    <Header/>
+        <Component {...pageProps} />
+    <Footer/>
+    </>
+  )
+}
+```
+
+we can also restrict some pages for loading any component with the following method.
+
+**Step1** - Inside the page where you don't want to show header. Create a page layout function just like below -
+
+```js
+About.getLayout = function PageLayout(page){
+    //page = About Page
+    return(
+        <>  
+            //header removed
+            {page}
+            <Footer/>
+        </>
+    )
+}
+```
+
+**Step 2** : Inside `_app.js` file before returning component check for getLayout
+
+```js
+if(component.getLayout){
+    return Component.getLayout(<Component {...pageProps}/>)
+}
+return (
+    <>
+      <Header/>
+      <Component {...pageProps}/>
+      <Footer/>
+    </>
+)
+```
+
+# Head Component
+Head components are very important in case of SEO and search engin crawlers.
+like title and description of a page.
+
+- Next.js does't populate those by default.
+- `Head` component helps us dynamically manage head elements.
+- Just import Head from `next/head`
+- We can almost use any meta tag of head and links too
+
+```js
+import Head from 'next/head'
+function HeadCom(){
+    return (
+        <>
+          <Head>
+              <title>My Page title</title>
+              <meta name = 'description' content = 'My page description'/>
+              <link rel ='icon' href = '/favicon.ico' />
+          </Head>
+          <h2 className='text-3xl text-blue-700 text-center'>Head Component Example</h2>
+        </>
+    )
+}
+export default HeadCom
+```
+
+If you want global head component and don't want to define in each page then create it inside the `_app.js` file/ above the main component. and override where you want to change.  
+We can also use dynamic title and description in meta because it's just a jsx.
+
+# Image Component
+- Next.js provides its own `Image` component
+- We images with normal <img> tag is not recommended and we should avoid
+- Next.js optimize images for production
+- For adding images from external sources add the host link inside the `next.config.js` file
+- For adding internal asset images add them inside the public folder.
+- `/` forward slash refer to public folder .So you do not need to write path name like `/public/image1.jpg` is wrong.
+- Write '/image1.jpg'
+
+**Benefits** 
+- Automatic optimization and format.
+- It also provides lazy loading.
+- Lazy loading means only visible/on display images will be loaded. below scroll images will not load until we scroll and reach to them.
+- Placeholder/blurred images while actual image is still loading
+- For generating placeholder images/thumbnails images should be static not from url
+
+```js
+ <Image src={img} width={420} height={200} alt ='banner' placeholder='blur'/>
+```
+We can also use network images for blurring. just use `blurDataURL` property.
+
+```js
+<Image src={img} width={420} height={200} alt ='banner' placeholder='blur' blurDataURL='https://xyz.jpg'/>
+
+```
+
+# Absolute Paths for imports
+We can use absolute import paths in Next.js easily  
+Steps - 
+- Create a `jsconfig.json` file in the root of yor project.
+
+```json
+{
+    "compilerOptions":{
+        "baseUrl":"."
+    }
+}
+```
+
+- Now you can remove `../..` from any imports
+
+# Static HTML Export
+**next build** - builds the application for production in the .next folder.
+**next start** - Starts a Node.js server that supports hybrid pages, serving both statically generated and serer rendered pages.
+**next export** - Exports all your pages to **static HTML** files that you can serve without the need of a Node.js server.
+- Host your app on any static hosting service or a CDN without having to maintain a server
+- Can not use ISR or SSR
+- Pages with `fallback enabled` in `getStaticPaths` can't be used.
+- Client side data fetching for dynamic can be done
+- Also we can't use `Image` component for optimization
+- Good Examples are landing pages, blogs and any app where content is generated at build time.
+
+**Steps to export static HTML files**  
+- In package.json inside scripts add a new key
+  ```json
+  {
+      "export":"next build && next export"
+  }
+  ```
+- In the terminal run `npm run export` or `yarn export`
+ 
+ # Typescript Support
+ Next.js comes with with typescript only we need to enable/config it.
+ - Create a `tsconfig.json` file in root of your project
+ - Install the typescript @types/react package
+ - restart the dev server
+ - Some data fetching functions are changed read docs for more info.
+ - like getStaticProps, getStaticPaths and other
+
+# Preview Mode
+- Preview mode feature is build specifically to build application that rely on a CMS.
+- CMS stands for content management system and is a tool that helps users create, manage and modify content on a website without the need for specialized technical knowledge.
+- How preview mode can be used when you do have a CMS.
+
+## When to use preview mode
+- In the pre-rendering section, we have understood about static generation where the pages are pre-rendered at build time. It is pretty useful when your pages fetch data from c CMS.
+- Its not suitable when you are creating a draft in your CMS and want to preview the draft changes immediately on your page.
+- You want Next.js to bypass static generation for this scenario.
+- You deploy your app and then when you make changes in your CMS, they won't be reflected as pages are only generated when you build the application.
+- There was a need to handle this scenario of 'Preview of Publish` as I call it.
+
+**How to implement**
+
+- create a new preview.js file inside api folder.
+- inside the handler 
+```js
+export default function handler(req, res) {
+res.setPreviewData({user:'Pradeep'})
+res.redirect(req.query.redirect)
+}
+```
+
+Inside the getStaticProps
+```js
+export async function getStaticProps(context) {
+    console.log('Running getStaticProps',context.previewData)
+    return {
+        props: {
+            data: context.preview?'List of draft news':'List of published news'
+        }
+    }
+}
+```
+
+**Benefit** - getStaticProps will run on every request not only at build time.
+
+Also create a handler for disabling preview mode.
+```js
+export default function handler(req,res){
+    res.clearPreviewData()
+    res.end('Preview mode disabled')
+}
+```
+
+# Redirects in Next.js
+**Step 1** - inside the `next.config.js` set the restricts as async function. And return list of redirects.
+
+```js
+module.exports = {
+  reactStrictMode: true,
+  redirects: async () => {
+    return [
+      {
+        source: '/old-paths',
+        destination: '/new-paths',
+        permanent: true,
+      }
+    ]
+  }
+}
+```
+`permanent` true means that in future also redirect will remain. 308
+`permanent` false means page is temporarily redirected and will work in future. 307
+307 and 308 are very important for crawlers.
+Redirection happen on the server hence there is no bad user experience.
+
+We can also use dynamic routes like with id
+```js
+{
+    source: '/old-blog/:id',
+    destination: '/new-blog/:id',
+    permanent: true,
+}
+```
+We can use regex and many more.
+
+# Environment variables
+Next.js comes with build in support for environment variables.
+
+- create a new file in the project root folder.
+- file name should be `.env.local`.
+- Here we can add env. variables as key value pair.
+
+```js
+DB_USER = /pradeep
+DB_PASSWORD = Password
+API_KEY = KEY
+```
+Now use it in any static or server side function with the help of `process.env`
+We can't use it inside jsx as it is not exposed on client side.  
+IF you want to expose then start the name of your env variable with NEXT_PUBLIC_KEYNAME
+
+```js
+NEXT_PUBLIC_PUBLIC_KEY = 123456
+```
+
+```js
+export async function getServerSideProps() {
+
+    const api_key = process.env.API_KEY
+    const response = await fetch('http://localhost:4000/news');
+    const data = await response.json();
+    return {
+        props: {
+            articles: data
+        }
+    }
+}
+
+```
+
+Note you can't use `object destructuring` with `process.env`.

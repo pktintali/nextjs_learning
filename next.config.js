@@ -1,6 +1,12 @@
 module.exports = {
   reactStrictMode: true,
-  images: {
-    domains: ['cdn-icons-png.flaticon.com'],
-  },
+  redirects: async () => {
+    return [
+      {
+        source: '/old-paths',
+        destination: '/new-paths',
+        permanent: true,
+      }
+    ]
+  }
 }

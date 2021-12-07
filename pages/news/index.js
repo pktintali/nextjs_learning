@@ -18,6 +18,9 @@ function NewsArticleList({ articles }) {
 export default NewsArticleList;
 
 export async function getServerSideProps() {
+    //Environment variables demo
+    const api_key = process.env.API_KEY
+    console.log(api_key)
     const response = await fetch('http://localhost:4000/news');
     const data = await response.json();
     return {
